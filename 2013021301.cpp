@@ -1,5 +1,6 @@
+//
 // PE形式のファイルが32ビットか64ビットかを判定します。
-// 最終更新日: 13 Feb 2013
+//
 
 #define STRICT
 #include <Windows.h>
