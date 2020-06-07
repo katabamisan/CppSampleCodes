@@ -2,7 +2,7 @@
 // インラインアセンブリでCPUID情報を取得する
 //
 // このコードはx86コードでしか動作しません。
-x64ではintrin.hの__cpuid、__cpuidexを使用してください。
+// x64ではintrin.hの__cpuid、__cpuidexを使用してください。
 //
 
 #include <iostream>
