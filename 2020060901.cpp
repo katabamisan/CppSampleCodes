@@ -35,25 +35,32 @@ vector<wstring> GetSubKeyNames(HKEY hKey)
 	return keyNames;
 }
 
+// ShellExキーを持つ<FileExt|ProgID>キーの名前とShellExのマップを作成する。
+map<wstring, vector<wstring>> CreateFileExtOrProgIDForShellExCommandsMap(HKEY hKeyClassesRoot)
+{
+	map<wstring, vector<wstring>> progIdAndShellExMap;
+	for (const auto& keyName : GetSubKeyNames(hKeyClassesRoot))
+	{
+		CRegKey shellExKey;
+		LSTATUS ls = shellExKey.Open(hKeyClassesRoot, data(keyName + L"\\ShellEx"),
+			KEY_READ | KEY_WOW64_64KEY);
+		if (ls != ERROR_SUCCESS)
+		{
+			continue;
+		}
+		progIdAndShellExMap[keyName] = move(GetSubKeyNames(shellExKey));
+	}
+	return move(progIdAndShellExMap);
+}
+
 int main()
 {
 	CRegKey classesRootKey;
 	classesRootKey.Open(HKEY_CLASSES_ROOT, nullptr,
 		KEY_READ | KEY_WOW64_64KEY);
 
-	// ShellExキーを持つ<FileExt|ProgID>キーの名前とShellExのマップを作成する
-	map<wstring, vector<wstring>> progIdAndShellExMap;
-	for (const auto& keyName : GetSubKeyNames(classesRootKey))
-	{
-		CRegKey shellExKey;
-		LSTATUS ls = shellExKey.Open(classesRootKey, data(keyName + L"\\ShellEx"),
-			KEY_READ | KEY_WOW64_64KEY);
-		if (ls != ERROR_SUCCESS)
-		{
-			continue;
-		}
-		progIdAndShellExMap[keyName] = GetSubKeyNames(shellExKey);
-	}
+	map<wstring, vector<wstring>> progIdAndShellExMap
+		= CreateFileExtOrProgIDForShellExCommandsMap(classesRootKey);
 
 	unordered_set<wstring> shellExCommandSet;
 	for (const auto& [name, entries] : progIdAndShellExMap)
