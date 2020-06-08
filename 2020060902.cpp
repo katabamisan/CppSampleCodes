@@ -50,7 +50,7 @@ void copy_if_else(InIt first, InIt last, TrueOutIt trueOut, FalseOutIt falseOut,
 }
 
 // ShellExキーを持つ<FileExt|ProgID>キーの名前とShellExのマップを作成する。
-map<wstring, vector<wstring>> CreateFileExtOrProgIDForShellExCommandsMap(HKEY hKeyClassesRoot)
+map<wstring, vector<wstring>> CreateFileExtOrProgIDToShellExCommandsMap(HKEY hKeyClassesRoot)
 {
 	map<wstring, vector<wstring>> progIdAndShellExMap;
 	for (const auto& keyName : GetSubKeyNames(hKeyClassesRoot))
@@ -84,11 +84,11 @@ int main()
 	classesRootKey.Open(HKEY_CLASSES_ROOT, nullptr,
 		KEY_READ | KEY_WOW64_64KEY);
 
-	map<wstring, vector<wstring>> progIdAndShellExMap
-		= CreateFileExtOrProgIDForShellExCommandsMap(classesRootKey);
+	map<wstring, vector<wstring>> progIdToShellExesMap
+		= CreateFileExtOrProgIDToShellExCommandsMap(classesRootKey);
 
 	unordered_set<wstring> shellExCommandSet;
-	for (const auto& [name, entries] : progIdAndShellExMap)
+	for (const auto& [name, entries] : progIdToShellExesMap)
 	{
 		shellExCommandSet.insert(cbegin(entries), cend(entries));
 	}
