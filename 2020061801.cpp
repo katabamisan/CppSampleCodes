@@ -48,7 +48,7 @@ wstring StlGetThreadDescription(DWORD dwThreadId)
 {
 	wstring result;
 	const auto threadHandle = OpenThread(GENERIC_READ, FALSE, dwThreadId);
-	if (threadHandle != NULL) {
+	if (threadHandle != nullptr) {
 		if (LPWSTR psz; SUCCEEDED(GetThreadDescription(threadHandle, &psz))) {
 			result = psz;
 			LocalFree(psz);
