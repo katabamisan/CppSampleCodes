@@ -1,10 +1,9 @@
-// すべてのスレッドから説明の設定されたスレッドのIDと説明を取得する
+// すべてのスレッドから説明の設定されたスレッドのIDと説明を取得する。
 //
 // 動作確認環境：
 // Microsoft Visual Studio Community 2019 Preview Version 16.7.0 Preview 2.0
-// Visual C++ 2019：00435-60000-00000-AA317
+// Visual C++ 2019
 // C++ 言語標準：C++20プレビュー（/std:c++latest）
-//
 
 // STL ヘッダー
 #include <algorithm>
