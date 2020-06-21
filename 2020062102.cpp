@@ -107,6 +107,7 @@ private:
 	STRRETToWStringWrapper(STRRETToWStringWrapper&&) = delete;
 };
 
+// LPITEMIDLISTを自動的に解放するためのクラス
 struct LPITEMIDLISTWrapper
 {
 private:
@@ -138,6 +139,8 @@ private:
 	LPITEMIDLISTWrapper(const LPITEMIDLISTWrapper&) = delete;
 };
 
+// IEnumIDListから取得したLPITEMIDLISTをSTLベクトルに変換して取得します。
+//SelGetEnumIDListItems<LPITEMIDLISTWrapper>とすることでLPITEMIDLISTを自動的に解放できます。
 template <typename Ty = LPITEMIDLIST>
 vector<Ty> StlGetEnumIDListItems(IEnumIDList* p)
 {
@@ -155,6 +158,7 @@ vector<Ty> StlGetEnumIDListItems(IEnumIDList* p)
 
 int main()
 {
+	// 日本語の出力対応
 	wcout.imbue(locale("Japanese"));
 
 	unique_com_ptr<IShellFolder> desktop;
