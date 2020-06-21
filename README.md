@@ -20,3 +20,4 @@ C++の1ファイル程度のサンプルコードの置き場です。
 |2020061902.cpp|クラスの登録されたレジストリキーの名前を検索してCSVに書き出す。|
 |2020061903.cpp|SID <-> STL String|
 |2020062101.cpp|STLでIUnknown派生クラスポインタやSTRRETを扱うためのラッパークラス（com_ptr_releaser、STRRETToWStringWrapper）|
+|2020062102.cpp|STL&COMでデスクトップのファイルシステムオブジェクトの名前を列挙する|
