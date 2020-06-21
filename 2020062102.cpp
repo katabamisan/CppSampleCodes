@@ -155,6 +155,8 @@ vector<Ty> StlGetEnumIDListItems(IEnumIDList* p)
 
 int main()
 {
+	wcout.imbue(locale("Japanese"));
+
 	unique_com_ptr<IShellFolder> desktop;
 	if (const auto hr = SHGetDesktopFolder(com_ptr_address(desktop)); FAILED(hr)) {
 		return hr;
@@ -180,7 +182,7 @@ int main()
 		});
 
 	for (const auto& displayName : displayNames) {
-		wcout << displayName.c_str() << endl;
+		wcout << displayName << endl;
 	}
 
 	return 0;
