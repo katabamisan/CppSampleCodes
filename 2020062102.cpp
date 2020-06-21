@@ -74,7 +74,7 @@ struct STRRETToWStringWrapper
 {
 public:
 	constexpr STRRETToWStringWrapper(wstring& target, LPITEMIDLIST pidl = nullptr) noexcept
-		: target(target), pidl(pidl), sr{}
+		: target(target), pidl(pidl), sr()
 	{
 	}
 
@@ -87,9 +87,14 @@ public:
 	{
 		LPWSTR psz;
 		if (SUCCEEDED(StrRetToStrW(&sr, pidl, &psz))) {
-			target = move(psz);
-		}
-		else {
+			try {
+				target.assign(psz);
+			} catch (...) {
+				CoTaskMemFree(psz);
+				throw;
+			}
+			CoTaskMemFree(psz);
+		} else {
 			target.clear();
 		}
 	}
@@ -102,45 +107,48 @@ private:
 	STRRETToWStringWrapper(STRRETToWStringWrapper&&) = delete;
 };
 
-template <typename Ty>
-struct CoTaskMem_allocator {
+struct LPITEMIDLISTWrapper
+{
+private:
+	LPITEMIDLIST pidl;
 public:
-	using value_type = Ty;
-	using size_type = size_t;
-	using difference_type = ptrdiff_t;
-
-	using propagate_on_container_move_assigment = true_type;
-	using is_always_equal = true_type;
-
-	constexpr CoTaskMem_allocator() noexcept {}
-	constexpr CoTaskMem_allocator(const CoTaskMem_allocator&) noexcept = default;
-	template <class _Other>
-	constexpr CoTaskMem_allocator(const CoTaskMem_allocator<_Other>&) noexcept {}
-
-	[[nodiscard]]
-	constexpr __declspec(allocator) Ty* allocate(const size_t count) const noexcept
+	LPITEMIDLISTWrapper() noexcept
+		: pidl(nullptr) {}
+	LPITEMIDLISTWrapper(LPITEMIDLIST pidl) noexcept
+		: pidl(pidl) {}
+	LPITEMIDLISTWrapper(LPITEMIDLISTWrapper&& wrapper) noexcept
+		: pidl(wrapper.pidl)
 	{
-		return reinterpret_cast<Ty*>(CoTaskMemAlloc(sizeof(Ty) * count));
+		wrapper.pidl = nullptr;
 	}
-
-	constexpr void deallocate(Ty* const ptr, const size_t count) const noexcept
+	~LPITEMIDLISTWrapper()
 	{
-		CoTaskMemFree(ptr);
+		if (pidl != nullptr) {
+			CoTaskMemFree(pidl);
+		}
 	}
+	operator LPITEMIDLIST() noexcept { return pidl; }
+	operator const LPITEMIDLIST() const noexcept { return pidl; }
+	LPITEMIDLIST* operator& () noexcept { return &pidl; }
+	const LPITEMIDLIST* operator& () const noexcept { return &pidl; }
+	LPITEMIDLIST get() noexcept { return pidl; }
+	const LPITEMIDLIST get() const noexcept { return pidl; }
+
+private:
+	LPITEMIDLISTWrapper(const LPITEMIDLISTWrapper&) = delete;
 };
 
-using vector_LPITEMIDLIST = vector<LPITEMIDLIST, CoTaskMem_allocator<LPITEMIDLIST>>;
-
-vector_LPITEMIDLIST StlGetEnumIDListItems(IEnumIDList* p)
+template <typename Ty = LPITEMIDLIST>
+vector<Ty> StlGetEnumIDListItems(IEnumIDList* p)
 {
 	if (p == nullptr) {
 		return {};
 	}
 	LPITEMIDLIST pidl;
 	ULONG fetched;
-	vector_LPITEMIDLIST pidls;
+	vector<Ty> pidls;
 	while (p->Next(1, &pidl, &fetched) == S_OK) {
-		pidls.emplace_back(pidl);
+		pidls.push_back(pidl);
 	}
 	return pidls;
 }
@@ -148,26 +156,19 @@ vector_LPITEMIDLIST StlGetEnumIDListItems(IEnumIDList* p)
 int main()
 {
 	unique_com_ptr<IShellFolder> desktop;
-	if (auto hr = SHGetDesktopFolder(com_ptr_address(desktop)); FAILED(hr)) {
-		return hr;
-	}
-
-	// デスクトップの表示名を取得
-	wstring desktopDisplayName;
-	if (auto hr = desktop->GetDisplayNameOf(nullptr, SHGDN_NORMAL, STRRETToWStringWrapper(desktopDisplayName));
-		FAILED(hr)) {
+	if (const auto hr = SHGetDesktopFolder(com_ptr_address(desktop)); FAILED(hr)) {
 		return hr;
 	}
 
 	// デスクトップの項目を取得
 	unique_com_ptr<IEnumIDList> enumIdList;
-	if (auto hr = desktop->EnumObjects(nullptr,
+	if (const auto hr = desktop->EnumObjects(nullptr,
 		SHCONTF_FOLDERS | SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN | SHCONTF_INCLUDESUPERHIDDEN,
 		com_ptr_address(enumIdList));
 		FAILED(hr)) {
 		return hr;
 	}
-	auto pidls = StlGetEnumIDListItems(enumIdList.get());
+	auto pidls = StlGetEnumIDListItems<LPITEMIDLISTWrapper>(enumIdList.get());
 
 	// デスクトップの項目の名前を取得
 	vector<wstring> displayNames;
@@ -177,8 +178,9 @@ int main()
 			desktop->GetDisplayNameOf(pidl, SHGDN_NORMAL, STRRETToWStringWrapper(displayName));
 			return displayName;
 		});
+
 	for (const auto& displayName : displayNames) {
-		wcout << displayName << endl;
+		wcout << displayName.c_str() << endl;
 	}
 
 	return 0;
