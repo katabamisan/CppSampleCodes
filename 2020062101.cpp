@@ -24,7 +24,7 @@ using namespace std;
 template <class InterfaceT>
 struct com_ptr_releaser
 {
-	void operator()(InterfaceT* p) const
+	constexpr void operator()(InterfaceT* p) const noexcept
 	{
 		if (p != nullptr) {
 			p->Release();
@@ -40,12 +40,12 @@ using unique_com_ptr = unique_ptr<InterfaceT, com_ptr_releaser<InterfaceT>>;
 template <typename InterfaceT>
 struct com_ptr_address {
 public:
-	com_ptr_address(unique_com_ptr<InterfaceT>& ptr)
+	constexpr com_ptr_address(unique_com_ptr<InterfaceT>& ptr) noexcept
 		: target(ptr), p(ptr.get())
 	{
 	}
 
-	~com_ptr_address()
+	~com_ptr_address() noexcept
 	{
 		target.reset(p);
 	}
@@ -69,7 +69,7 @@ private:
 struct STRRETToWStringWrapper
 {
 public:
-	STRRETToWStringWrapper(wstring& target, LPITEMIDLIST pidl = nullptr)
+	constexpr STRRETToWStringWrapper(wstring& target, LPITEMIDLIST pidl = nullptr) noexcept
 		: target(target), pidl(pidl), sr{}
 	{
 	}
@@ -79,7 +79,7 @@ public:
 		return &sr;
 	}
 
-	~STRRETToWStringWrapper()
+	~STRRETToWStringWrapper() noexcept
 	{
 		LPWSTR psz;
 		if (SUCCEEDED(StrRetToStrW(&sr, pidl, &psz))) {
