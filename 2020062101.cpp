@@ -83,7 +83,8 @@ public:
 	{
 		LPWSTR psz;
 		if (SUCCEEDED(StrRetToStrW(&sr, pidl, &psz))) {
-			target = psz;
+			target.assign(psz);
+			CoTaskMemFree(psz);
 		} else {
 			target.clear();
 		}
